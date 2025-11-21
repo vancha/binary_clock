@@ -1,6 +1,5 @@
 [Desktop Entry]
 Name=Example
-Comment=no
 Type=Application
 Icon=com.github.pop-os.cosmic-app-template
 Exec=example %F

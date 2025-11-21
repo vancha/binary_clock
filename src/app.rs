@@ -2,25 +2,32 @@
 
 use crate::config::Config;
 use crate::fl;
+use chrono::Timelike;
+use chrono::{DateTime, FixedOffset, Local, TimeZone};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
+use cosmic::iced::mouse;
+use cosmic::iced::widget::canvas;
 use cosmic::iced::{window::Id, Limits, Subscription};
+use cosmic::iced::{Color, Rectangle, Renderer, Theme};
 use cosmic::iced_winit::commands::popup::{destroy_popup, get_popup};
 use cosmic::prelude::*;
 use cosmic::widget;
+use cosmic::widget::Canvas;
+use cosmic::Element;
 use futures_util::SinkExt;
 
-use cosmic::Element;
-use cosmic::widget::Canvas;
+const MINUTES_IN_HOUR: i32 = 3600;
 
-use cosmic::iced::mouse;
-use cosmic::iced::widget::canvas;
-use cosmic::iced::{Color, Rectangle, Renderer, Theme};
-
+#[derive(Debug)]
+enum DisplayMode {
+    BCD,
+    BINARY,
+}
 // First, we define the data we need for drawing
 #[derive(Debug)]
 struct Circle {
     radius: f32,
-
+    mode: DisplayMode,
 }
 
 // Then, we implement the `Program` trait
@@ -36,28 +43,30 @@ impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for Circle 
         bounds: Rectangle,
         _cursor: mouse::Cursor,
     ) -> Vec<canvas::Geometry> {
+
+
+
+        let utc_plus_one = MINUTES_IN_HOUR;
+        let offset = FixedOffset::east_opt(utc_plus_one).unwrap();
+        let now_with_offset = Local::now().with_timezone(&offset);
+        println!("{:?}", now_with_offset.second());
+
+
+
+
         // We prepare a new `Frame`
         let mut frame = canvas::Frame::new(renderer, bounds.size());
 
         // We create a `Path` representing a simple circle
         let circle = canvas::Path::circle(frame.center(), self.radius);
-
+        let color = if now_with_offset.second() % 2 == 0 { Color::WHITE } else { Color::BLACK };
         // And fill it with some color
-        frame.fill(&circle, Color::BLACK);
+        frame.fill(&circle, color);//Color::WHITE);
 
         // Then, we produce the geometry
         vec![frame.into_geometry()]
     }
 }
-/* Finally, we simply use our `Circle` to create the `Canvas`!
-fn view<'a, Message: 'a>(_state: &'a State) -> Element<'a, Message> {
-    canvas(Circle { radius: 50.0 }).into()
-}*/
-
-
-
-
-
 
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.
@@ -77,6 +86,7 @@ pub struct AppModel {
 #[derive(Debug, Clone)]
 pub enum Message {
     TogglePopup,
+    Tick,
     PopupClosed(Id),
     SubscriptionChannel,
     UpdateConfig(Config),
@@ -142,15 +152,15 @@ impl cosmic::Application for AppModel {
     /// be drawn using the `view_window` method.
     fn view(&self) -> Element<'_, Self::Message> {
         /*self.core
-            .applet
-            .icon_button("display-symbolic")
-            .on_press(Message::TogglePopup)
-            .into()*/
-             //cosmic::iced::widget::canvas(Circle { radius: 50.0 }).into()
-            //let c: cosmic::iced::widget::Canvas<Circle, Message, Theme, Renderer> = canvas(Circle { radius: 50.0 }).into();//cosmic::iced::widget::Canvas<Circle,Self::Message,cosmic::iced::Theme,cosmic::Renderer,> = canvas(Circle { radius: 50.0 });
-            //c.into()
-           let c: Canvas<Circle, Message, cosmic::Theme, cosmic::Renderer> =
-           canvas::Canvas::new(Circle { radius: 10.0 });
+        .applet
+        .icon_button("display-symbolic")
+        .on_press(Message::TogglePopup)
+        .into()*/
+        let c: Canvas<Circle, Message, cosmic::Theme, cosmic::Renderer> =
+            canvas::Canvas::new(Circle {
+                radius: 10.0,
+                mode: DisplayMode::BCD,
+            });
 
         c.into()
     }
@@ -199,6 +209,7 @@ impl cosmic::Application for AppModel {
 
                     Message::UpdateConfig(update.config)
                 }),
+            cosmic::iced::time::every(tokio::time::Duration::new(1,0)).map(|_|Message::Tick),
         ])
     }
 
@@ -209,6 +220,9 @@ impl cosmic::Application for AppModel {
     /// tasks are finished.
     fn update(&mut self, message: Self::Message) -> Task<cosmic::Action<Self::Message>> {
         match message {
+            Message::Tick => {
+                println!("tick");
+            }
             Message::SubscriptionChannel => {
                 // For example purposes only.
             }
