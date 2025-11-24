@@ -17,6 +17,7 @@ use cosmic::Element;
 use futures_util::SinkExt;
 
 const UTC_OFFSET_SECONDS: i32 = 3600;
+const ROWS: u8 = 4;
 
 #[derive(Debug)]
 enum DisplayMode {
@@ -26,9 +27,33 @@ enum DisplayMode {
 // First, we define the data we need for drawing
 #[derive(Debug)]
 struct ClockWidget {
-    radius: f32,
     mode: DisplayMode,
     current_time: DateTime<FixedOffset>,
+}
+
+impl ClockWidget {
+    fn column(&self, index: u8, number: u32, renderer: &Renderer, bounds: Rectangle) -> canvas::Frame {
+        let mut frame = canvas::Frame::new(renderer, bounds.size());
+
+        //let required_circles = 4.0;
+        // This is the amount of space we have available
+        let available_height = bounds.size().height;
+        // The radius will be the the available height divided by the number of circles times two
+        let radius = available_height / (ROWS * 2) as f32;
+        // Start at the very top, in the center of the available frame
+        let mut position = cosmic::iced::Point { x: (radius * 2.0) * index as f32, y:0.0};//frame.center();
+        position.x += radius;
+
+        // Increment said position by the radius, so that the first circle just touches the boundary rather than be on it
+        position.y += radius;
+        for circle_row in (0..ROWS as usize).rev() {
+            let circle = canvas::Path::circle(position, radius);
+            let circle_color = if number & (1 << circle_row) != 0 { Color::WHITE } else { Color::BLACK };
+            frame.fill(&circle, circle_color);
+            position.y += radius * 2.0;
+        }
+        frame
+    }
 }
 
 // Then, we implement the `Program` trait
@@ -44,20 +69,25 @@ impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for ClockWi
         bounds: Rectangle,
         _cursor: mouse::Cursor,
     ) -> Vec<canvas::Geometry> {
-        // We prepare a new `Frame`
-        let mut frame = canvas::Frame::new(renderer, bounds.size());
-        let required_circles = 4.0;
 
-        for circle_row in 0..required_circles as usize {
-            let radius = (bounds.size().height / required_circles) / 2.0;
-            let position: cosmic::iced::Point = frame.center();
-            let circle = canvas::Path::circle(position, radius);
-            let circle_color = if self.current_time.second() % 2 == 0 { Color::WHITE } else { Color::BLACK };
-            frame.fill(&circle, circle_color);
-        }
+        println!("available height: {}",bounds.height);
+
+        let hours_tens_place    = self.column(0, self.current_time.hour() / 10, renderer, bounds);
+        let hours               = self.column(1, self.current_time.hour() % 10, renderer, bounds);
+        let ten_minutes         = self.column(2, self.current_time.minute() / 10, renderer, bounds);
+        let minutes             = self.column(3, self.current_time.minute() % 10, renderer, bounds);
+        //let tenth_seconds       = self.column(4, self.current_time.second() / 10, renderer, bounds);
+        //let seconds             = self.column(5, self.current_time.second() % 10, renderer, bounds);
 
         // Then, we produce the geometry
-        vec![frame.into_geometry()]
+        vec![
+            hours_tens_place.into_geometry(),
+            hours.into_geometry(),
+            ten_minutes.into_geometry(),
+            minutes.into_geometry(),
+            //tenth_seconds.into_geometry(),
+            //seconds.into_geometry()
+        ]
     }
 }
 
@@ -74,7 +104,6 @@ pub struct AppModel {
     /// Example row toggler.
     example_row: bool,
     current_time: DateTime<FixedOffset>,
-
 }
 
 /// Messages emitted by the application and its widgets.
@@ -153,10 +182,12 @@ impl cosmic::Application for AppModel {
         let c: Canvas<ClockWidget, Message, cosmic::Theme, cosmic::Renderer> =
             canvas::Canvas::new(ClockWidget {
                 current_time: self.current_time,
-                radius: 10.0,
                 mode: DisplayMode::BCD,
             });
-        c.into()
+
+        cosmic::widget::Container::new(c)
+            .padding(5)       // <-- adjust padding here
+            .into()
     }
 
     /// The applet's popup window will be drawn using this view method. If there are
