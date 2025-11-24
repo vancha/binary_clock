@@ -16,7 +16,7 @@ use cosmic::widget::Canvas;
 use cosmic::Element;
 use futures_util::SinkExt;
 
-const MINUTES_IN_HOUR: i32 = 3600;
+const UTC_OFFSET_SECONDS: i32 = 3600;
 
 #[derive(Debug)]
 enum DisplayMode {
@@ -25,13 +25,14 @@ enum DisplayMode {
 }
 // First, we define the data we need for drawing
 #[derive(Debug)]
-struct Circle {
+struct ClockWidget {
     radius: f32,
     mode: DisplayMode,
+    current_time: DateTime<FixedOffset>,
 }
 
 // Then, we implement the `Program` trait
-impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for Circle {
+impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for ClockWidget {
     // No internal state
     type State = ();
 
@@ -43,25 +44,17 @@ impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for Circle 
         bounds: Rectangle,
         _cursor: mouse::Cursor,
     ) -> Vec<canvas::Geometry> {
-
-
-
-        let utc_plus_one = MINUTES_IN_HOUR;
-        let offset = FixedOffset::east_opt(utc_plus_one).unwrap();
-        let now_with_offset = Local::now().with_timezone(&offset);
-        println!("{:?}", now_with_offset.second());
-
-
-
-
         // We prepare a new `Frame`
         let mut frame = canvas::Frame::new(renderer, bounds.size());
+        let required_circles = 4.0;
 
-        // We create a `Path` representing a simple circle
-        let circle = canvas::Path::circle(frame.center(), self.radius);
-        let color = if now_with_offset.second() % 2 == 0 { Color::WHITE } else { Color::BLACK };
-        // And fill it with some color
-        frame.fill(&circle, color);//Color::WHITE);
+        for circle_row in 0..required_circles as usize {
+            let radius = (bounds.size().height / required_circles) / 2.0;
+            let position: cosmic::iced::Point = frame.center();
+            let circle = canvas::Path::circle(position, radius);
+            let circle_color = if self.current_time.second() % 2 == 0 { Color::WHITE } else { Color::BLACK };
+            frame.fill(&circle, circle_color);
+        }
 
         // Then, we produce the geometry
         vec![frame.into_geometry()]
@@ -80,6 +73,8 @@ pub struct AppModel {
     config: Config,
     /// Example row toggler.
     example_row: bool,
+    current_time: DateTime<FixedOffset>,
+
 }
 
 /// Messages emitted by the application and its widgets.
@@ -120,8 +115,12 @@ impl cosmic::Application for AppModel {
         core: cosmic::Core,
         _flags: Self::Flags,
     ) -> (Self, Task<cosmic::Action<Self::Message>>) {
+
+        let offset = FixedOffset::east_opt(UTC_OFFSET_SECONDS).unwrap();
+        let current_time = Local::now().with_timezone(&offset);
         // Construct the app model with the runtime's core.
         let app = AppModel {
+            current_time,
             core,
             config: cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
                 .map(|context| match Config::get_entry(&context) {
@@ -151,17 +150,12 @@ impl cosmic::Application for AppModel {
     /// This view should emit messages to toggle the applet's popup window, which will
     /// be drawn using the `view_window` method.
     fn view(&self) -> Element<'_, Self::Message> {
-        /*self.core
-        .applet
-        .icon_button("display-symbolic")
-        .on_press(Message::TogglePopup)
-        .into()*/
-        let c: Canvas<Circle, Message, cosmic::Theme, cosmic::Renderer> =
-            canvas::Canvas::new(Circle {
+        let c: Canvas<ClockWidget, Message, cosmic::Theme, cosmic::Renderer> =
+            canvas::Canvas::new(ClockWidget {
+                current_time: self.current_time,
                 radius: 10.0,
                 mode: DisplayMode::BCD,
             });
-
         c.into()
     }
 
@@ -203,6 +197,7 @@ impl cosmic::Application for AppModel {
             self.core()
                 .watch_config::<Config>(Self::APP_ID)
                 .map(|update| {
+
                     // for why in update.errors {
                     //     tracing::error!(?why, "app config error");
                     // }
@@ -221,7 +216,8 @@ impl cosmic::Application for AppModel {
     fn update(&mut self, message: Self::Message) -> Task<cosmic::Action<Self::Message>> {
         match message {
             Message::Tick => {
-                println!("tick");
+                let offset = FixedOffset::east_opt(UTC_OFFSET_SECONDS).unwrap();
+                self.current_time = Local::now().with_timezone(&offset);
             }
             Message::SubscriptionChannel => {
                 // For example purposes only.
