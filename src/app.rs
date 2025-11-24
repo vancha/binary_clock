@@ -71,6 +71,7 @@ impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for ClockWi
     ) -> Vec<canvas::Geometry> {
 
         println!("available height: {}",bounds.height);
+        println!("all the stuff: {:?}",bounds);
 
         let hours_tens_place    = self.column(0, self.current_time.hour() / 10, renderer, bounds);
         let hours               = self.column(1, self.current_time.hour() % 10, renderer, bounds);
@@ -186,8 +187,16 @@ impl cosmic::Application for AppModel {
             });
 
         cosmic::widget::Container::new(c)
-            .padding(5)       // <-- adjust padding here
+            .width(200)
+            .padding(5)
             .into()
+        /*
+        cosmic::widget::list_column()
+            .padding(0)       // <-- adjust padding here
+            .spacing(0)
+            .add(c)
+            .into()
+            */
     }
 
     /// The applet's popup window will be drawn using this view method. If there are
