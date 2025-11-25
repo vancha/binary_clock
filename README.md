@@ -1,6 +1,17 @@
-# Example
+# A simple binary clock for the cosmic desktop
 
-no
+
+Looks like this: 
+
+<img width="80" height="55" alt="Screenshot_2025-11-25_09-49-09" src="https://github.com/user-attachments/assets/0c9ebdb7-51f9-4dc6-bf6b-4534decabbb1" />
+
+
+
+
+It uses binary coded decimal to display the time. See it here next to the actual system clock:
+
+
+<img width="342" height="58" alt="Screenshot_2025-11-25_09-49-22" src="https://github.com/user-attachments/assets/320ab930-873a-45d5-a4c3-b84d18d6f448" />
 
 ## Installation
 
