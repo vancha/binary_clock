@@ -1,4 +1,4 @@
-# A really simple binary clock
+# A simple binary clock for the cosmic desktop
 
 Looks like this: 
 <img width="80" height="55" alt="Screenshot_2025-11-25_09-49-09" src="https://github.com/user-attachments/assets/0c9ebdb7-51f9-4dc6-bf6b-4534decabbb1" />
