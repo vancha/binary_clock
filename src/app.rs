@@ -24,6 +24,7 @@ enum DisplayMode {
     BCD,
     BINARY,
 }
+
 // First, we define the data we need for drawing
 #[derive(Debug)]
 struct ClockWidget {
@@ -32,23 +33,27 @@ struct ClockWidget {
 }
 
 impl ClockWidget {
+    //@TODO: remove all the padding from this code
     fn column(&self, index: u8, number: u32, renderer: &Renderer, bounds: Rectangle) -> canvas::Frame {
         let mut frame = canvas::Frame::new(renderer, bounds.size());
-
-        //let required_circles = 4.0;
-        // This is the amount of space we have available
-        let available_height = bounds.size().height;
+        //some padding until i learn how to properly size the widget..
+        let padding = 14.0;
+        // This is the amount of space we have available, subtract the hardcoded padding
+        let available_height = bounds.size().height - padding;
         // The radius will be the the available height divided by the number of circles times two
         let radius = available_height / (ROWS * 2) as f32;
-        // Start at the very top, in the center of the available frame
-        let mut position = cosmic::iced::Point { x: (radius * 2.0) * index as f32, y:0.0};//frame.center();
+        // Start at the very top, in the center of the available frame but add the padding
+        let mut position = cosmic::iced::Point { x: (radius * 2.0) * index as f32, y: padding / 2.0};
         position.x += radius;
+        //position.x += padding/1.2;
 
         // Increment said position by the radius, so that the first circle just touches the boundary rather than be on it
         position.y += radius;
         for circle_row in (0..ROWS as usize).rev() {
             let circle = canvas::Path::circle(position, radius);
-            let circle_color = if number & (1 << circle_row) != 0 { Color::WHITE } else { Color::BLACK };
+            let active_color = Color::from_rgb(0.7, 0.7, 0.7);//Color::WHITE;
+            let inactive_color = Color::from_rgb(0.2, 0.2, 0.2);;
+            let circle_color = if number & (1 << circle_row) != 0 { active_color } else { inactive_color };
             frame.fill(&circle, circle_color);
             position.y += radius * 2.0;
         }
@@ -77,8 +82,8 @@ impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for ClockWi
         let hours               = self.column(1, self.current_time.hour() % 10, renderer, bounds);
         let ten_minutes         = self.column(2, self.current_time.minute() / 10, renderer, bounds);
         let minutes             = self.column(3, self.current_time.minute() % 10, renderer, bounds);
-        //let tenth_seconds       = self.column(4, self.current_time.second() / 10, renderer, bounds);
-        //let seconds             = self.column(5, self.current_time.second() % 10, renderer, bounds);
+        let tenth_seconds       = self.column(4, self.current_time.second() / 10, renderer, bounds);
+        let seconds             = self.column(5, self.current_time.second() % 10, renderer, bounds);
 
         // Then, we produce the geometry
         vec![
@@ -86,8 +91,8 @@ impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for ClockWi
             hours.into_geometry(),
             ten_minutes.into_geometry(),
             minutes.into_geometry(),
-            //tenth_seconds.into_geometry(),
-            //seconds.into_geometry()
+            tenth_seconds.into_geometry(),
+            seconds.into_geometry()
         ]
     }
 }
@@ -187,9 +192,12 @@ impl cosmic::Application for AppModel {
             });
 
         cosmic::widget::Container::new(c)
-            .width(200)
-            .padding(5)
+            //.width(400)
+            //.max_width(400)
+            //.padding(5)
             .into()
+        //cosmic::widget::text("abcdefgthi").into()
+
         /*
         cosmic::widget::list_column()
             .padding(0)       // <-- adjust padding here
@@ -204,7 +212,7 @@ impl cosmic::Application for AppModel {
     /// create a view for.
     fn view_window(&self, _id: Id) -> Element<'_, Self::Message> {
         let content_list = widget::list_column()
-            .padding(5)
+            //.padding(5)
             .spacing(0)
             .add(widget::settings::item(
                 fl!("example-row"),
