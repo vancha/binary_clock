@@ -1,8 +1,10 @@
 # A really simple binary clock
 
-Looks like this: <img width="80" height="55" alt="Screenshot_2025-11-25_09-49-09" src="https://github.com/user-attachments/assets/0c9ebdb7-51f9-4dc6-bf6b-4534decabbb1" />
+Looks like this: 
+<img width="80" height="55" alt="Screenshot_2025-11-25_09-49-09" src="https://github.com/user-attachments/assets/0c9ebdb7-51f9-4dc6-bf6b-4534decabbb1" />
 
 It uses binary coded decimal to display the time. See it here next to the actual system clock:
+
 <img width="80" height="55" alt="Screenshot_2025-11-25_09-49-09" src="https://github.com/user-attachments/assets/77880ecb-306d-4f52-b54d-25bc287ffa00" />
 
 
