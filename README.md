@@ -5,8 +5,7 @@ Looks like this:
 
 It uses binary coded decimal to display the time. See it here next to the actual system clock:
 
-<img width="80" height="55" alt="Screenshot_2025-11-25_09-49-09" src="https://github.com/user-attachments/assets/77880ecb-306d-4f52-b54d-25bc287ffa00" />
-
+<img width="342" height="58" alt="Screenshot_2025-11-25_09-49-22" src="https://github.com/user-attachments/assets/320ab930-873a-45d5-a4c3-b84d18d6f448" />
 
 
 ## Installation
