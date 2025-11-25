@@ -45,8 +45,6 @@ impl ClockWidget {
         // Start at the very top, in the center of the available frame but add the padding
         let mut position = cosmic::iced::Point { x: (radius * 2.0) * index as f32, y: padding / 2.0};
         position.x += radius;
-        //position.x += padding/1.2;
-
         // Increment said position by the radius, so that the first circle just touches the boundary rather than be on it
         position.y += radius;
         for circle_row in (0..ROWS as usize).rev() {
@@ -61,9 +59,7 @@ impl ClockWidget {
     }
 }
 
-// Then, we implement the `Program` trait
 impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for ClockWidget {
-    // No internal state
     type State = ();
 
     fn draw(
@@ -75,9 +71,6 @@ impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for ClockWi
         _cursor: mouse::Cursor,
     ) -> Vec<canvas::Geometry> {
 
-        println!("available height: {}",bounds.height);
-        println!("all the stuff: {:?}",bounds);
-
         let hours_tens_place    = self.column(0, self.current_time.hour() / 10, renderer, bounds);
         let hours               = self.column(1, self.current_time.hour() % 10, renderer, bounds);
         let ten_minutes         = self.column(2, self.current_time.minute() / 10, renderer, bounds);
@@ -85,7 +78,6 @@ impl<Message, Theme> cosmic::widget::canvas::Program<Message, Theme> for ClockWi
         let tenth_seconds       = self.column(4, self.current_time.second() / 10, renderer, bounds);
         let seconds             = self.column(5, self.current_time.second() % 10, renderer, bounds);
 
-        // Then, we produce the geometry
         vec![
             hours_tens_place.into_geometry(),
             hours.into_geometry(),
